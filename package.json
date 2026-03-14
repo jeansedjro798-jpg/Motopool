@@ -1,0 +1,12 @@
+{
+  "name": "motopool-tombola",
+  "version": "1.0.0",
+  "description": "Motopool Tombola with Monetbil and Supabase",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}
