@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motopool — Tombola de Pâques 2025</title>
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏍️</text></svg>">
+    <link rel="icon" type="image/png" href="img/favicon.png">
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap"
         rel="stylesheet">
@@ -923,8 +922,8 @@
         </div>
         <div class="header-inner">
             <div class="logo-block">
-                <div class="logo-name">Motopool</div>
-                <div class="logo-tagline">Cotonou · Bénin</div>
+                <img src="img/logo-sombre.png" alt="Motopool Logo" style="height:50px; width:auto;">
+                <div class="logo-tagline" style="margin-top:2px">Cotonou · Bénin</div>
             </div>
             <div class="header-divider"></div>
             <div class="header-title-block">
@@ -989,12 +988,12 @@
 
         <!-- SHARE BANNER -->
         <div class="share-banner">
-            <h3>La chance se partage !</h3>
-            <p>Une moto neuve à partir de 525 F CFA, c'est l'offre de l'année. Joignez l'utile à l'agréable, séduisez
-                vos proches en partageant ce lien et augmentez la joie autour de vous ! Plus on est de fous, plus on
-                gagne </p>
+            <h3>🎁 La chance se partage !</h3>
+            <p>Imaginez gagner une moto neuve pour le prix d'un café ! Ne gardez pas cette opportunité pour vous, faites
+                plaisir à vos amis en partageant l'offre du moment chez Motopool. Plus on est de participants, plus la
+                fête sera belle 🚀</p>
             <div class="share-buttons">
-                <a href="whatsapp://send?text=Tente de gagner une moto neuve avec Motopool à partir de 675F CFA ! Clique ici : https://motopool.vercel.app/"
+                <a href="whatsapp://send?text=%F0%9F%A4%A9%20Regarde%20%C3%A7a%20!%20Motopool%20organise%20une%20Tombola%20pour%20P%C3%A2ques%20et%20on%20peut%20gagner%20une%20moto%20neuve%20%C3%A0%20partir%20de%20675F%20seulement%20!%20%F0%9F%8F%8D%EF%B8%8F%0A%0ATente%20ta%20chance%20ici%20%3A%20https%3A%2F%2Fmotopool-two.vercel.app"
                     data-action="share/whatsapp/share" target="_blank" class="btn-share btn-whatsapp">
                     <svg viewBox="0 0 448 512" width="18" height="18" fill="white">
                         <path
@@ -1002,8 +1001,8 @@
                     </svg>
                     Partager sur WhatsApp
                 </a>
-                <a href="https://www.facebook.com/sharer/sharer.php?u=https://motopool.vercel.app/" target="_blank"
-                    class="btn-share btn-facebook">
+                <a href="https://www.facebook.com/sharer/sharer.php?u=https://motopool-two.vercel.app&quote=Tentez de gagner une moto neuve avec Motopool à partir de 675F CFA ! C'est le moment de briller pour Pâques."
+                    target="_blank" class="btn-share btn-facebook">
                     <svg viewBox="0 0 320 512" width="18" height="18" fill="white">
                         <path
                             d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z" />
@@ -1096,8 +1095,11 @@
             }
         ];
 
-        // Tickets vendus simulés (persistance session)
+        // Tickets vendus simulés (social proof)
         let ticketsData = JSON.parse(sessionStorage.getItem('motopool_tickets') || '{}');
+        const MOCK_SALES = {
+            1: 87, 2: 124, 3: 56, 4: 92, 5: 143
+        };
 
         // REMPLACER PAR VOS VRAIES CLÉS LORS DU DÉPLOIEMENT
         const SUPABASE_URL = "https://hjxyedhksnqjerqimiia.supabase.co";
@@ -1117,7 +1119,9 @@
         }
 
         function getVendus(motoId) {
-            return ticketsData[motoId]?.length || 0;
+            const realVendus = ticketsData[motoId]?.length || 0;
+            const mockVendus = MOCK_SALES[motoId] || 0;
+            return realVendus + mockVendus;
         }
 
         async function fetchRealTicketsCount() {
@@ -1305,9 +1309,9 @@
             monetbil.widget.setup({
                 amount: amount,
                 item_ref: "TICKET-" + Date.now(),
-                logo: "https://motopool.bj/logo.png", // Replace with actual motopool logo
-                return_url: window.location.href,
-                notify_url: "https://votre-domaine.com/webhook/monetbil", // Remplacer par l'URL réelle du backend
+                logo: window.location.origin + "/img/logo-sombre.png",
+                return_url: "https://motopool-two.vercel.app",
+                notify_url: "https://motopool-two.vercel.app/api/webhook-monetbil",
                 button: {
                     cancel: "Annuler",
                     pay: "Payer " + formatXOF(amount)
@@ -1400,9 +1404,24 @@
 
             const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [210, 105] });
 
+            // On tente d'ajouter le logo clair s'il est dispo
+            const logoImg = new Image();
+            logoImg.src = 'img/logo-clair.png';
+
             // Background
             doc.setFillColor(13, 61, 30);
             doc.rect(0, 0, 210, 105, 'F');
+
+            // Logo on ticket
+            try {
+                doc.addImage(logoImg, 'PNG', 15, 12, 35, 12);
+            } catch (e) {
+                // Fallback text if logo fails to load in jsPDF
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(22);
+                doc.setFont('helvetica', 'bold');
+                doc.text('MOTOPOOL', 32, 22, { align: 'center' });
+            }
 
             // Gold border
             doc.setDrawColor(200, 150, 26);
@@ -1415,11 +1434,8 @@
             doc.setFillColor(200, 150, 26);
             doc.rect(6, 6, 52, 93, 'F');
 
-            // MOTOPOOL text on strip
+            // MOTOPOOL text on strip (Hidden if logo works)
             doc.setTextColor(13, 61, 30);
-            doc.setFontSize(22);
-            doc.setFont('helvetica', 'bold');
-            doc.text('MOTOPOOL', 32, 38, { align: 'center' });
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
             doc.text('TOMBOLA DE PÂQUES', 32, 46, { align: 'center' });
