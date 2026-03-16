@@ -1307,18 +1307,19 @@
             const txId = params.get('transaction_id') || params.get('txId');
             const motoParam = params.get('moto');
 
-            if (motoParam && txId) {
+            if (txId) {
                 const pendingStr = localStorage.getItem('motopool_pending');
                 if (!pendingStr) return;
 
                 const pending = JSON.parse(pendingStr);
-                const motoId = parseInt(motoParam);
+                // On utilise le motoId de l'URL s'il existe, sinon celui en cache local
+                const motoId = motoParam ? parseInt(motoParam) : pending.motoId;
                 const moto = MOTOS.find(m => m.id === motoId);
 
                 const now = Date.now();
                 const isRecent = pending.timestamp && (now - pending.timestamp < 1000 * 60 * 60 * 2);
 
-                if (moto && pending.motoId === motoId && isRecent) {
+                if (moto && isRecent) {
                     const nom = pending.nom || 'Client';
                     const tel = pending.tel || '';
 
