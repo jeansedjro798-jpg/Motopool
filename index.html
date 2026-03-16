@@ -1342,10 +1342,10 @@
                     if (!alreadySaved) {
                         const newTicket = { 
                             moto_id: moto.id, 
-                            num: nums[0], 
-                            nom: nom, 
-                            tel: tel, 
-                            txId: txId 
+                            numero_ticket: nums[0], 
+                            acheteur_nom: nom, 
+                            acheteur_tel: tel
+                            // txId est omis car probablement pas dans la table tickets
                         };
                         
                         // 2. ENREGISTREMENT ROBUSTE
