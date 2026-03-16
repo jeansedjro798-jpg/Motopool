@@ -1104,6 +1104,18 @@
             return realVendus + mockVendus;
         }
 
+        async function saveTicketToSupabase(ticket) {
+            if (!supabaseClient) return false;
+            try {
+                const { error } = await supabaseClient.from('tickets').insert([ticket]);
+                if (error) throw error;
+                return true;
+            } catch (e) {
+                console.error("Erreur d'enregistrement Supabase :", e);
+                return false;
+            }
+        }
+
         async function fetchRealTicketsCount() {
             if (!supabaseClient) return;
             try {
@@ -1290,24 +1302,19 @@
         }
 
         // Vérifier si on revient d'un paiement Kkiapay
-        function checkPaymentReturn() {
+        async function checkPaymentReturn() {
             const params = new URLSearchParams(window.location.search);
             const txId = params.get('transaction_id') || params.get('txId');
             const motoParam = params.get('moto');
 
-            // Si on a un paramètre moto et un txID
             if (motoParam && txId) {
                 const pendingStr = localStorage.getItem('motopool_pending');
-                if (!pendingStr) {
-                    console.error("Aucune session de paiement en cours.");
-                    return;
-                }
+                if (!pendingStr) return;
 
                 const pending = JSON.parse(pendingStr);
                 const motoId = parseInt(motoParam);
                 const moto = MOTOS.find(m => m.id === motoId);
 
-                // Sécurité : Vérifier le motoId, la présence des infos, et le timestamp (2h max)
                 const now = Date.now();
                 const isRecent = pending.timestamp && (now - pending.timestamp < 1000 * 60 * 60 * 2);
 
@@ -1315,34 +1322,87 @@
                     const nom = pending.nom || 'Client';
                     const tel = pending.tel || '';
 
+                    // 1. RE-SYNC AVANT GÉNÉRATION pour éviter les conflits
+                    await fetchRealTicketsCount();
+
                     const vendus = getVendus(moto.id);
+                    const restants = moto.nbTickets - vendus;
+                    
+                    if (restants <= 0) {
+                        alert("Désolé, cette moto vient d'être épuisée. Contactez le support pour un remboursement ou un échange.");
+                        return;
+                    }
+
                     const nums = generateTicketNumbers(moto.id, 1, vendus);
 
-                    // Sauvegarder le ticket
                     if (!ticketsData[moto.id]) ticketsData[moto.id] = [];
-                    // Éviter les doublons si l'utilisateur rafraîchit la page de succès
                     const alreadySaved = ticketsData[moto.id].some(t => t.txId === txId);
+                    
                     if (!alreadySaved) {
-                        ticketsData[moto.id].push({ num: nums[0], nom: nom, tel: tel, txId: txId });
+                        const newTicket = { 
+                            moto_id: moto.id, 
+                            num: nums[0], 
+                            nom: nom, 
+                            tel: tel, 
+                            txId: txId 
+                        };
+                        
+                        // 2. ENREGISTREMENT ROBUSTE
+                        let success = false;
+                        if (supabaseClient) {
+                            success = await saveTicketToSupabase(newTicket);
+                        }
+
+                        if (!success) {
+                            // Sauvegarde de secours en localStorage si Supabase échoue
+                            const failedSyncs = JSON.parse(localStorage.getItem('motopool_failed_sync') || '[]');
+                            failedSyncs.push(newTicket);
+                            localStorage.setItem('motopool_failed_sync', JSON.stringify(failedSyncs));
+                            console.warn("Échec Supabase, ticket mis en file d'attente locale.");
+                        }
+
+                        ticketsData[moto.id].push(newTicket);
                         saveTickets();
                     }
 
-                    // Nettoyer SEULEMENT SI le ticket est bien affiché ou après un certain délai
-                    // Pour l'instant on garde localStorage.removeItem mais on protège contre le refresh via txId check
                     localStorage.removeItem('motopool_pending');
                     window.history.replaceState({}, '', window.location.pathname);
 
-                    // Afficher le succès
                     setTimeout(() => {
                         openModal(moto.id);
                         showSuccess(moto, nums, nom, tel);
                         renderCards();
                     }, 300);
-                } else {
-                    console.error("Session invalide ou expirée.");
-                    alert("Session de paiement expirée ou invalide. Si vous avez payé, contactez le support.");
                 }
             }
+        }
+
+        // Tenter de resynchroniser les tickets échoués
+        async function syncFailedTickets() {
+            if (!supabaseClient) return;
+            const failedSyncs = JSON.parse(localStorage.getItem('motopool_failed_sync') || '[]');
+            if (failedSyncs.length === 0) return;
+
+            const remaining = [];
+            for (const ticket of failedSyncs) {
+                const success = await saveTicketToSupabase(ticket);
+                if (!success) remaining.push(ticket);
+            }
+            
+            if (remaining.length === 0) {
+                localStorage.removeItem('motopool_failed_sync');
+            } else {
+                localStorage.setItem('motopool_failed_sync', JSON.stringify(remaining));
+            }
+        }
+
+        function startPolling() {
+            // Mise à jour toutes les 30 secondes
+            setInterval(async () => {
+                await fetchRealTicketsCount();
+                await syncFailedTickets();
+                renderCards();
+            }, 30000);
         }
 
         // ====== COUNTDOWN LOGIC ======
@@ -1514,8 +1574,28 @@
         // Init
         async function init() {
             await fetchRealTicketsCount();
+            await syncFailedTickets();
             renderCards();
-            checkPaymentReturn();
+            await checkPaymentReturn();
+            
+            // Démarrer la mise à jour automatique
+            startPolling();
+
+            // RÉCUPÉRATION MANUELLE DU TICKET 93 (Haojue Rich id:4)
+            // Si le ticket 93 manque à l'appel dans la base mais a été payé,
+            // cette fonction permet d'ajuster l'affichage ou de tenter une ré-insertion.
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('recover') === '93') {
+                const pendingStr = localStorage.getItem('motopool_pending');
+                if (pendingStr) {
+                    console.log("Tentative de récupération forcée du ticket 93...");
+                    // On force le check même si le timestamp est vieux
+                    const pending = JSON.parse(pendingStr);
+                    pending.timestamp = Date.now(); 
+                    localStorage.setItem('motopool_pending', JSON.stringify(pending));
+                    await checkPaymentReturn();
+                }
+            }
         }
 
         init();
