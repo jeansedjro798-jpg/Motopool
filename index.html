@@ -10,7 +10,7 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap"
         rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script type="text/javascript" src="https://fr.monetbil.com/widget/v2/monetbil.min.js"></script>
+
     <!-- Chargement Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -537,39 +537,7 @@
             border-color: var(--gold);
         }
 
-        .qty-control {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
 
-        .qty-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            background: var(--grey);
-            border: 1.5px solid #e5ddd0;
-            font-size: 1.2rem;
-            cursor: pointer;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
-        }
-
-        .qty-btn:hover {
-            background: var(--gold);
-            color: #fff;
-            border-color: var(--gold);
-        }
-
-        .qty-display {
-            font-size: 1.1rem;
-            font-weight: 700;
-            min-width: 30px;
-            text-align: center;
-        }
 
         .total-recap {
             background: var(--gold-pale);
@@ -952,8 +920,7 @@
     <!-- MAIN -->
     <main>
         <div class="section-title">Choisissez <span>votre moto</span></div>
-        <div class="section-sub">Cliquez sur une moto et achetez un ou plusieurs tickets — chaque ticket = une chance de
-            gagner</div>
+        <div class="section-sub">Cliquez sur une moto et achetez votre ticket — chaque ticket = une chance de gagner. Un seul ticket par achat.</div>
 
         <div class="motos-grid" id="motos-grid"></div>
 
@@ -1051,7 +1018,8 @@
                 nbTickets: 1187,
                 vendus: 0,
                 img: "img/Haojue-KA-150.png",
-                color: "#1B6B38"
+                color: "#1B6B38",
+                kkiapayLink: "https://direct.kkiapay.me/37365/motopool-ka-150-l75Xy9Udb"
             },
             {
                 id: 2,
@@ -1061,7 +1029,8 @@
                 nbTickets: 1261,
                 vendus: 0,
                 img: "img/Haojue-Spinner.png",
-                color: "#C8961A"
+                color: "#C8961A",
+                kkiapayLink: "https://direct.kkiapay.me/37365/motopool-haojue-spiner-HLtNaZ6Fq-Fdyvlpad3"
             },
             {
                 id: 3,
@@ -1071,7 +1040,8 @@
                 nbTickets: 1290,
                 vendus: 0,
                 img: "img/TVS-Rock-125.png",
-                color: "#C0392B"
+                color: "#C0392B",
+                kkiapayLink: "https://direct.kkiapay.me/37365/motopool-tvs-rock-125-u7-cMxghD"
             },
             {
                 id: 4,
@@ -1081,7 +1051,8 @@
                 nbTickets: 1472,
                 vendus: 0,
                 img: "img/Haojue-Rich.png",
-                color: "#8e44ad"
+                color: "#8e44ad",
+                kkiapayLink: "https://direct.kkiapay.me/37365/motopool-haojue-rich-ja5zuyKwN"
             },
             {
                 id: 5,
@@ -1091,7 +1062,8 @@
                 nbTickets: 1202,
                 vendus: 0,
                 img: "img/Haojin-Lynx-110-16.png",
-                color: "#2980b9"
+                color: "#2980b9",
+                kkiapayLink: "https://direct.kkiapay.me/37365/motopool-haojin-lynx-115-16-6uSZBXSsL"
             }
         ];
 
@@ -1224,7 +1196,6 @@
 
         // ====== MODAL ======
         let currentMotoId = null;
-        let currentQty = 1;
 
         function openModal(motoId) {
             currentMotoId = motoId;
@@ -1246,12 +1217,8 @@
         });
 
         function renderModalForm(moto) {
-            const vendus = getVendus(moto.id);
-            const restants = moto.nbTickets - vendus;
-            const maxQty = Math.min(10, restants);
-
             document.getElementById('modal-content').innerHTML = `
-    <div class="modal-title">🎟️ Réserver votre ticket</div>
+    <div class="modal-title">🎟️ Acheter votre ticket</div>
     <div class="modal-moto-mini">
       <img src="${moto.img}" alt="${moto.name}"
            onerror="this.style.display='none'">
@@ -1269,30 +1236,19 @@
       <label class="form-label">Numéro de téléphone *</label>
       <input class="form-input" id="inp-tel" type="tel" placeholder="Ex : +229 97 00 00 00" autocomplete="tel">
     </div>
-    <div class="form-group">
-      <label class="form-label">Nombre de tickets</label>
-      <div class="qty-control">
-        <button class="qty-btn" onclick="changeQty(-1, ${moto.prixTicket}, ${maxQty})">−</button>
-        <span class="qty-display" id="qty-val">1</span>
-        <button class="qty-btn" onclick="changeQty(1, ${moto.prixTicket}, ${maxQty})">+</button>
-        <span style="font-size:0.8rem;color:#aaa;margin-left:8px">max ${maxQty}</span>
-      </div>
+    <div style="background:var(--gold-pale);border-radius:10px;padding:12px 16px;margin:12px 0 6px;text-align:center;font-size:0.85rem;color:#888">
+      <strong style="color:var(--gold);font-size:1rem">1 ticket</strong> — ${formatXOF(moto.prixTicket)}
     </div>
     <div class="total-recap">
       <span class="total-label">Total à payer</span>
-      <span class="total-amount" id="total-amount">${formatXOF(moto.prixTicket)}</span>
+      <span class="total-amount">${formatXOF(moto.prixTicket)}</span>
     </div>
     <button class="btn-payer" onclick="processPaiement(${moto.id})">
-      💳 Confirmer le paiement
+      💳 Payer et obtenir mon ticket
     </button>
-    <p style="text-align:center;font-size:0.75rem;color:#bbb;margin-top:12px">Paiement accepté : Wave · MTN Money · Moov Money · Espèce en agence</p>
+    <p style="text-align:center;font-size:0.75rem;color:#bbb;margin-top:12px">Paiement sécurisé via Kkiapay : Wave · MTN Money · Moov Money</p>
+    <p style="text-align:center;font-size:0.72rem;color:#ccc;margin-top:6px">⚠️ Un seul ticket par achat. Pour acheter un autre ticket, revenez sur la plateforme après le paiement.</p>
   `;
-        }
-
-        function changeQty(delta, prixTicket, maxQty) {
-            currentQty = Math.min(maxQty, Math.max(1, currentQty + delta));
-            document.getElementById('qty-val').textContent = currentQty;
-            document.getElementById('total-amount').textContent = formatXOF(prixTicket * currentQty);
         }
 
         function processPaiement(motoId) {
@@ -1303,50 +1259,56 @@
             if (!tel) { alert('Veuillez entrer votre numéro de téléphone.'); return; }
 
             const moto = MOTOS.find(m => m.id === motoId);
-            const amount = moto.prixTicket * currentQty;
 
-            // Ouvrir le widget Monetbil
-            monetbil.widget.setup({
-                amount: amount,
-                item_ref: "TICKET-" + Date.now(),
-                logo: "https://motopool-two.vercel.app/img/logo-sombre.png",
-                return_url: "https://motopool-two.vercel.app/",
-                notify_url: "https://motopool-two.vercel.app/api/webhook-monetbil",
-                button: {
-                    cancel: "Annuler",
-                    pay: "Payer " + formatXOF(amount)
-                },
-                currency: "XOF",
-                phone: tel,
-                country: "BJ",
-                custom: JSON.stringify({ // Payload pour le Webhook !
-                    motoId: motoId,
-                    qty: currentQty,
-                    nom: nom,
-                    tel: tel
-                }),
-                onSuccess: function (transaction) {
-                    console.log("Paiement réussi:", transaction);
-                    // Dans un vrai projet, le backend Valide le paiement via webhook
-                    // Ici, on simule le succès pour la démo Frontend
+            // Sauvegarder les infos client dans localStorage pour les récupérer au retour
+            localStorage.setItem('motopool_pending', JSON.stringify({
+                motoId: motoId,
+                nom: nom,
+                tel: tel,
+                timestamp: Date.now()
+            }));
+
+            // Rediriger vers le lien Kkiapay de la moto
+            window.location.href = moto.kkiapayLink;
+        }
+
+        // Vérifier si on revient d'un paiement Kkiapay
+        function checkPaymentReturn() {
+            const params = new URLSearchParams(window.location.search);
+            const txId = params.get('transaction_id') || params.get('txId');
+            const motoParam = params.get('moto');
+
+            // Si on a un paramètre moto dans l'URL (= retour de Kkiapay)
+            if (motoParam) {
+                const pending = JSON.parse(localStorage.getItem('motopool_pending') || 'null');
+                const motoId = parseInt(motoParam);
+                const moto = MOTOS.find(m => m.id === motoId);
+
+                if (moto) {
+                    // Utiliser les infos du localStorage si disponibles, sinon valeurs par défaut
+                    const nom = pending?.nom || 'Client';
+                    const tel = pending?.tel || '';
 
                     const vendus = getVendus(moto.id);
-                    const nums = generateTicketNumbers(moto.id, currentQty, vendus);
+                    const nums = generateTicketNumbers(moto.id, 1, vendus);
 
-                    // Sauvegarder localement (À Remplacer par BDD)
+                    // Sauvegarder le ticket
                     if (!ticketsData[moto.id]) ticketsData[moto.id] = [];
-                    nums.forEach(n => ticketsData[moto.id].push({ num: n, nom: nom, tel: tel }));
+                    ticketsData[moto.id].push({ num: nums[0], nom: nom, tel: tel, txId: txId || 'N/A' });
                     saveTickets();
 
-                    // Afficher succès
-                    showSuccess(moto, nums, nom, tel);
-                    renderCards(); // Mettre à jour la progression
-                },
-                onCancel: function () {
-                    console.log("Paiement annulé par l'utilisateur.");
+                    // Nettoyer
+                    localStorage.removeItem('motopool_pending');
+                    window.history.replaceState({}, '', window.location.pathname);
+
+                    // Afficher le succès
+                    setTimeout(() => {
+                        openModal(moto.id);
+                        showSuccess(moto, nums, nom, tel);
+                        renderCards();
+                    }, 300);
                 }
-            });
-            monetbil.widget.show();
+            }
         }
 
         // ====== COUNTDOWN LOGIC ======
@@ -1382,15 +1344,16 @@
       <div class="success-title">Paiement confirmé !</div>
       <div class="success-sub">
         Félicitations <strong>${nom}</strong> !<br>
-        Vos tickets pour la <strong>${moto.name}</strong> sont enregistrés.
+        Votre ticket pour la <strong>${moto.name}</strong> est enregistré.
       </div>
       <div class="ticket-numbers">
-        <div class="ticket-numbers-label">Vos numéros de tickets</div>
+        <div class="ticket-numbers-label">Votre numéro de ticket</div>
         <div class="ticket-nums">${numsHTML}</div>
       </div>
       <button class="btn-download" onclick="downloadTicket(${moto.id}, '${nums.join(',')}', '${nom.replace(/'/g, "\\'")}', '${tel}')">
         ⬇️ Télécharger mon ticket PDF
       </button>
+      <p style="text-align:center;font-size:0.75rem;color:#aaa;margin-top:12px">Pour acheter un autre ticket, fermez cette fenêtre et sélectionnez à nouveau une moto.</p>
       <button onclick="closeModal()" style="width:100%;margin-top:10px;background:none;border:none;color:#aaa;font-size:0.85rem;cursor:pointer;padding:8px;">Fermer</button>
     </div>
   `;
@@ -1439,7 +1402,7 @@
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
             doc.text('TOMBOLA DE PÂQUES', 32, 46, { align: 'center' });
-            doc.text('2025', 32, 52, { align: 'center' });
+            doc.text('2026', 32, 52, { align: 'center' });
             doc.setFontSize(7);
             doc.text('BÉNIN', 32, 92, { align: 'center' });
 
@@ -1514,27 +1477,11 @@
             document.body.style.overflow = 'hidden';
         }
 
-        function showReglement() {
-            document.getElementById('modal-content').innerHTML = `
-                <div class="modal-title">📜 Règlement de la Tombola</div>
-                <div style="font-size: 0.85rem; line-height: 1.6; color: #555; text-align: left; max-height: 400px; overflow-y: auto; padding-right: 10px;">
-                    <p><strong>Article 1 : Organisation</strong><br>La société Motopool Bénin organise une tombola intitulée "Tombola de Pâques 2026" du 13 mars 2026 au 15 avril 2026.</p>
-                    <p><strong>Article 2 : Participation</strong><br>La participation est ouverte à toute personne physique résidant au Bénin. L'achat d'un ticket au prix indiqué sur le site est obligatoire pour participer.</p>
-                    <p><strong>Article 3 : Dotations</strong><br>Sont mises en jeu 5 motos neuves de modèles différents (Haojue KA 150, Haojue Spinner, TVS Rock 125, Haojue Rich, Haojin Lynx).</p>
-                    <p><strong>Article 4 : Tirage au sort</strong><br>Le tirage au sort aura lieu en direct le jour de Pâques 2026. Les gagnants seront contactés par téléphone via le numéro fourni lors de l'achat.</p>
-                    <p><strong>Article 5 : Remise des lots</strong><br>Les lots sont à retirer à l'agence Motopool de Cotonou sur présentation du ticket (numérique ou imprimé) et d'une pièce d'identité valide.</p>
-                    <p><strong>Article 6 : Données personnelles</strong><br>Les informations collectées sont nécessaires à la gestion de la tombola et ne seront pas cédées à des tiers.</p>
-                </div>
-                <button class="btn-payer" style="margin-top: 20px;" onclick="closeModal()">J'ai compris</button>
-            `;
-            document.getElementById('overlay').classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-
         // Init
         async function init() {
             await fetchRealTicketsCount();
             renderCards();
+            checkPaymentReturn();
         }
 
         init();
